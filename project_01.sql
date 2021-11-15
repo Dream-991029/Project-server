@@ -11,7 +11,7 @@
  Target Server Version : 80027
  File Encoding         : 65001
 
- Date: 15/11/2021 01:19:13
+ Date: 16/11/2021 01:24:24
 */
 
 SET NAMES utf8mb4;
@@ -82,15 +82,55 @@ CREATE TABLE `sys_user`  (
   `update_time` datetime NULL DEFAULT NULL COMMENT '更新时间',
   `remark` varchar(500) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '备注',
   PRIMARY KEY (`user_id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 38 CHARACTER SET = utf8 COLLATE = utf8_general_ci COMMENT = '用户信息表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 41 CHARACTER SET = utf8 COLLATE = utf8_general_ci COMMENT = '用户信息表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of sys_user
 -- ----------------------------
-INSERT INTO `sys_user` VALUES (1, 'admin', '00', '15888888888', '1', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '0', '0', 0, '2020-11-12 15:05:30', 0, NULL, '管理员');
-INSERT INTO `sys_user` VALUES (37, 'dream', '00', '19999999999', '1', '$2a$10$srVJrOLY3KvuyMBdarFM5OyfmUzcTaqhk5IC5NyRuHO4ag73LYzIW', '0', '0', 0, '2021-11-14 15:59:00', NULL, NULL, 'dream');
-INSERT INTO `sys_user` VALUES (38, 'cs', '11', '19999999999', '1', '$2a$10$WMv0uoprgnMqOF84wK2UUOHkiNvUmBi9RQhUDbi3nY1V8qk09yXlO', '0', '0', 0, '2021-11-14 19:44:27', NULL, NULL, '');
-INSERT INTO `sys_user` VALUES (39, 'cs2', '11', '19999999999', '0', '$2a$10$AcQPDPogLXlf4670ZoDiAOAwsEsZmLa0H/QescGb5ULRZTOvjGLtC', '0', '0', 0, '2021-11-14 19:45:52', NULL, NULL, '');
-INSERT INTO `sys_user` VALUES (40, 'cs3', '11', '18888888888', '0', '$2a$10$mq7Kqw6gFGntjCDCkrXsy.2CuvM1P5.AxtQxcfYQx2Os9eU.v8nc6', '0', '0', 0, '2021-11-14 19:48:27', NULL, NULL, '');
+INSERT INTO `sys_user` VALUES (1, 'admin', '00', '15888888888', '0', '', '0', '0', 1, '2021-11-15 16:15:23', NULL, NULL, '管理员');
+INSERT INTO `sys_user` VALUES (2, 'dream', '11', '19888888888', '2', '$2a$10$0IiwuIgV/qGglLIaKvh15uZDmp6Ele8nxR7OL2DJRReYV0MA.09Zm', '0', '0', 2, '2021-11-16 01:16:21', NULL, NULL, 'dream');
+INSERT INTO `sys_user` VALUES (3, 'cs1', '11', '19888888888', '0', '$2a$10$Nhy28Bnd4uZ7K1ro9OsFW.c3Bp9OnAJ.mIVbLppCla3K7oK9Gs0PO', '0', '0', 3, '2021-11-16 01:16:56', NULL, NULL, '');
+INSERT INTO `sys_user` VALUES (4, 'c2', '11', '19888888888', '0', '$2a$10$WyM9L3sV33g94qZ0rSbAkeG0l/V.EvhFv5jpPRWyrB6MgAN7uha5a', '0', '0', 4, '2021-11-16 01:17:12', NULL, NULL, 'qeqwewqeq');
+INSERT INTO `sys_user` VALUES (5, 'c3', '11', '19888888888', '1', '$2a$10$Pr678UQ40VV2jv6rcHSNKOD8ukvWLsEmT7EJ452uAFenPXtlKQFUq', '0', '0', 5, '2021-11-16 01:17:28', NULL, NULL, '');
+INSERT INTO `sys_user` VALUES (6, 'c4', '00', '13321312132', '0', '$2a$10$iqWoU7UJ3vyAe9uci4Iq7upKHDHssqoNNJZ.DUEA.juGtycsU/mgu', '0', '0', 6, '2021-11-16 01:17:53', NULL, NULL, '');
+INSERT INTO `sys_user` VALUES (7, 'root', '00', '16899999999', '2', '$2a$10$UZUX7QAuHuwRXDD2K7C7hOdtif5RhHJJPowvlNs38Dw.zAFflhRxy', '0', '0', 7, '2021-11-16 01:18:22', NULL, NULL, 'root用户');
+
+-- ----------------------------
+-- Table structure for sys_user_sex
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_user_sex`;
+CREATE TABLE `sys_user_sex`  (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `sex_id` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT NULL,
+  `sex` varchar(2) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `gender`(`sex`) USING BTREE,
+  INDEX `gender_2`(`sex`, `sex_id`) USING BTREE,
+  INDEX `sex_id`(`sex_id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_bin ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of sys_user_sex
+-- ----------------------------
+INSERT INTO `sys_user_sex` VALUES (2, '1', '女');
+INSERT INTO `sys_user_sex` VALUES (3, '2', '未知');
+INSERT INTO `sys_user_sex` VALUES (1, '0', '男');
+
+-- ----------------------------
+-- Table structure for sys_user_type
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_user_type`;
+CREATE TABLE `sys_user_type`  (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_type_id` varchar(2) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `user_type` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_bin ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of sys_user_type
+-- ----------------------------
+INSERT INTO `sys_user_type` VALUES (1, '00', '系统用户');
+INSERT INTO `sys_user_type` VALUES (2, '11', '普通用户');
 
 SET FOREIGN_KEY_CHECKS = 1;

@@ -30,24 +30,27 @@ module.exports.register = (req, res) => {
     // 用户名没有被占用
     // 密码加密(bcrypt.hashSync(明文密码, 随机盐长度))
     data.password = bcrypt.hashSync(data.password, 10);
-    const newData = {
-      ...data,
-      create_by: '0',
-      create_time: formatTime(),
-      update_by: null,
-      update_time: null
-    }
-    delete newData.confirm_password
-    // 添加用户sql
-    const sqlAddUser = 'INSERT INTO sys_user SET ?';
-    db.query(sqlAddUser, newData, (err, results) => {
-      if (err) {
-        return res.ck(err);
-      } else if (results.affectedRows !== 1) {
-        return res.ck('注册失败,请稍后再试!');
+    // 获取数据库中最后一个ID号
+    const sqlGetLastId = 'SELECT info.user_id FROM sys_user info ORDER BY info.user_id DESC LIMIT 1';
+    db.query(sqlGetLastId, (err, results) => {
+      if (err) return res.ck(err)
+      const newData = {
+        ...data,
+        create_by: results[0].user_id + 1,
+        create_time: formatTime()
       }
-      return res.ck('注册成功,请登录!', 0);
-    }); 
+      delete newData.confirm_password;
+      // 添加用户sql
+      const sqlAddUser = 'INSERT INTO sys_user SET ?';
+      db.query(sqlAddUser, newData, (err, results) => {
+        if (err) {
+          return res.ck(err);
+        } else if (results.affectedRows !== 1) {
+          return res.ck('注册失败,请稍后再试!');
+        }
+        return res.ck('注册成功,请登录!', '注册成功!', 0);
+      });
+    });
   });
 };
 
@@ -76,7 +79,8 @@ module.exports.login = (req, res) => {
       ...results[0],
       password: "",
       status: "",
-      del_flag: ""
+      del_flag: "",
+      islogin: true
     }
     // 将用户信息加密成token
     const tokenStr = jwt.sign(user, config.jwtSecretkey, {
