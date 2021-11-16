@@ -58,5 +58,5 @@ app.use((err, req, res, next) => {
 })
 // 启动服务器
 app.listen(port, host,() => {
-  console.log("服务器启动成功! 访问http://192.168.10.7:8024");
+  console.log(`服务器启动成功! 访问http://${host}:${port}`);
 })
