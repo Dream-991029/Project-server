@@ -13,15 +13,35 @@ const config = require("../config");
 
 
 // 获取用户信息
-module.exports.getUserInfo = (req, res) =>{
-  // 获取用户信息sql
-  const sqlGetUserInfo = '(SELECT info.user_id,info.user_name,type.user_type,info.phone_number,gen.sex,info.status,info.del_flag,info.user_name as create_by,info.create_time,info.update_by,info.update_time,info.remark FROM sys_user info,sys_user info2,sys_user_sex gen,sys_user_type type WHERE info.sex=gen.sex_id AND info.user_type=type.user_type_id AND info2.create_by=info.user_id AND info2.update_by IS null) UNION (SELECT temp.user_id,temp.user_name,temp.user_type,temp.phone_number,temp.sex,temp.status,temp.del_flag,temp.create_by,temp.create_time,temp2.user_name as update_by,temp.update_time,temp.remark FROM sys_user as temp2,(SELECT info.user_id,info.user_name,type.user_type,info.phone_number,gen.sex,info.status,info.del_flag,info.user_name as create_by,info.create_time,info.update_by,info.update_time,info.remark FROM sys_user info,sys_user info2,sys_user_sex gen,sys_user_type type WHERE info.sex=gen.sex_id AND info.user_type=type.user_type_id AND info2.create_by=info.user_id) as temp WHERE temp.update_by=temp2.user_id) ORDER BY user_id';
+module.exports.getUserInfo = (req, res) => {
+  // 获取数据
+  const data = req.query;
+  // 表单验证
+  const valueErr = userInfoFromCheck.validate(data, userInfoFromCheck.schema.schemaGetUerInfo);
+  if (valueErr) return res.ck(valueErr)
+  let sqlGetUserInfo = '';
+  let sqlGetUserInfoCount = '';
+  const page_num = parseInt(data.page_num);
+  const page_size = parseInt(data.page_size);
+  const skip = (page_num - 1) * page_size;
+  if (data.user_name === "") {
+    // 获取用户信息sql
+    sqlGetUserInfo = `(SELECT info.user_id,info.user_name,type.user_type,info.phone_number,gen.sex,info.status,info.user_name as create_by,info.create_time,info.update_by,info.update_time,info.remark FROM sys_user info,sys_user info2,sys_user_sex gen,sys_user_type type WHERE info.sex=gen.sex_id AND info.user_type=type.user_type_id AND info2.create_by=info.user_id AND info.del_flag=0 AND info2.update_by IS null) UNION (SELECT temp.user_id,temp.user_name,temp.user_type,temp.phone_number,temp.sex,temp.status,temp.create_by,temp.create_time,temp2.user_name as update_by,temp.update_time,temp.remark FROM sys_user as temp2,(SELECT info.user_id,info.user_name,type.user_type,info.phone_number,gen.sex,info.status,info.user_name as create_by,info.create_time,info.update_by,info.update_time,info.remark FROM sys_user info,sys_user info2,sys_user_sex gen,sys_user_type type WHERE info.sex=gen.sex_id AND info.user_type=type.user_type_id AND info2.create_by=info.user_id) as temp WHERE temp.update_by=temp2.user_id AND temp2.del_flag=0) ORDER BY user_id LIMIT ${skip},${page_size}`;
+    sqlGetUserInfoCount = 'SELECT COUNT(*) AS total FROM sys_user';
+  } else {
+    sqlGetUserInfo = `(SELECT info.user_id,info.user_name,type.user_type,info.phone_number,gen.sex,info.status,info.user_name as create_by,info.create_time,info.update_by,info.update_time,info.remark FROM sys_user info,sys_user info2,sys_user_sex gen,sys_user_type type WHERE info.sex=gen.sex_id AND info.user_type=type.user_type_id AND info2.create_by=info.user_id AND info.del_flag=0 AND info2.update_by IS null AND MATCH(info.user_name) AGAINST('*${data.user_name}*' IN BOOLEAN MODE)) UNION (SELECT temp.user_id,temp.user_name,temp.user_type,temp.phone_number,temp.sex,temp.status,temp.create_by,temp.create_time,temp2.user_name as update_by,temp.update_time,temp.remark FROM sys_user as temp2,(SELECT info.user_id,info.user_name,type.user_type,info.phone_number,gen.sex,info.status,info.user_name as create_by,info.create_time,info.update_by,info.update_time,info.remark FROM sys_user info,sys_user info2,sys_user_sex gen,sys_user_type type WHERE info.sex=gen.sex_id AND info.user_type=type.user_type_id AND info2.create_by=info.user_id) as temp WHERE temp.update_by=temp2.user_id AND temp2.del_flag=0 AND MATCH(temp2.user_name) AGAINST('*${data.user_name}*' IN BOOLEAN MODE)) ORDER BY user_id LIMIT ${skip},${page_size}`;
+    sqlGetUserInfoCount = `SELECT COUNT(*) AS total from ((SELECT info.user_id,info.user_name,type.user_type,info.phone_number,gen.sex,info.status,info.user_name as create_by,info.create_time,info.update_by,info.update_time,info.remark FROM sys_user info,sys_user info2,sys_user_sex gen,sys_user_type type WHERE info.sex=gen.sex_id AND info.user_type=type.user_type_id AND info2.create_by=info.user_id AND info.del_flag=0 AND info2.update_by IS null AND MATCH(info.user_name) AGAINST('*${data.user_name}*' IN BOOLEAN MODE)) UNION (SELECT temp.user_id,temp.user_name,temp.user_type,temp.phone_number,temp.sex,temp.status,temp.create_by,temp.create_time,temp2.user_name as update_by,temp.update_time,temp.remark FROM sys_user as temp2,(SELECT info.user_id,info.user_name,type.user_type,info.phone_number,gen.sex,info.status,info.user_name as create_by,info.create_time,info.update_by,info.update_time,info.remark FROM sys_user info,sys_user info2,sys_user_sex gen,sys_user_type type WHERE info.sex=gen.sex_id AND info.user_type=type.user_type_id AND info2.create_by=info.user_id) as temp WHERE temp.update_by=temp2.user_id AND temp2.del_flag=0 AND MATCH(temp2.user_name) AGAINST('*${data.user_name}*' IN BOOLEAN MODE)) ORDER BY user_id) as temp3`;
+  }
   db.query(sqlGetUserInfo, (err, results) => {
     if (err) return res.ck(err)
-    const data = {
-      total: results.length,
-      data: results
-    }
-    return res.ck(data, '获取用户信息成功!', 0)
+    const val = results;
+    db.query(sqlGetUserInfoCount, (err1, results1) => {
+      if (err1) return res.ck(err1)
+      const data = {
+        total: results1[0].total,
+        data: val
+      }
+      return res.ck(data, '获取用户信息成功!', 0)
+    })
   })
 }
