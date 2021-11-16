@@ -22,7 +22,7 @@ app.use(express.urlencoded({extended: false}));
 app.use(bodyParser.json())
 // 响应数据中间件
 app.use((req, res, next) => {
-  res.ck = (err, status = 1) => {
+  res.ck = (err, message = '', status = 1) => {
     let obj = {
       status,
       msg: err instanceof Error ? err.message : err
@@ -30,6 +30,7 @@ app.use((req, res, next) => {
     if (status != 1) {
       obj = {
         status,
+        msg: message,
         data: err
       }
       res.json(obj);
@@ -40,10 +41,13 @@ app.use((req, res, next) => {
   next();
 });
 // 解析token
-app.use(expressJwt({ secret: config.jwtSecretkey, algorithms: ['HS256'] }).unless({ path: [/^\/user/] }));
+app.use(expressJwt({ secret: config.jwtSecretkey, algorithms: ['HS256'] }).unless({ path: [/^\/user\//] }));
 // 导入用户路由
 const userRouter = require('./router/user.js');
 app.use('/user', userRouter);
+// 导入用户信息路由
+const userInfoRouter = require('./router/userinfo.js')
+app.use('/userinfo', userInfoRouter)
 // 导入菜单树路由
 const treeMenuRouter = require('./router/menu.js')
 app.use('/menu', treeMenuRouter);

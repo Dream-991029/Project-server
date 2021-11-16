@@ -70,6 +70,6 @@ module.exports.getMenuInfo = (req, res) => {
     }
     // 找到根节点, 查找根节点下面所有子节点
     rootNode.children = getAllNode(allMenu, rootNode)
-    return res.ck(rootNode, 0)
+    return res.ck(rootNode, '获取菜单树成功!', 0)
   })
 }
