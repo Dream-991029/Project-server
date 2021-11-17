@@ -11,7 +11,7 @@
  Target Server Version : 80027
  File Encoding         : 65001
 
- Date: 16/11/2021 01:24:24
+ Date: 18/11/2021 02:25:46
 */
 
 SET NAMES utf8mb4;
@@ -81,19 +81,28 @@ CREATE TABLE `sys_user`  (
   `update_by` bigint NULL DEFAULT NULL COMMENT '更新者',
   `update_time` datetime NULL DEFAULT NULL COMMENT '更新时间',
   `remark` varchar(500) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '备注',
-  PRIMARY KEY (`user_id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 41 CHARACTER SET = utf8 COLLATE = utf8_general_ci COMMENT = '用户信息表' ROW_FORMAT = DYNAMIC;
+  PRIMARY KEY (`user_id`) USING BTREE,
+  FULLTEXT INDEX `ft_user_name`(`user_name`) WITH PARSER `ngram`
+) ENGINE = InnoDB AUTO_INCREMENT = 8 CHARACTER SET = utf8 COLLATE = utf8_general_ci COMMENT = '用户信息表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of sys_user
 -- ----------------------------
-INSERT INTO `sys_user` VALUES (1, 'admin', '00', '15888888888', '0', '', '0', '0', 1, '2021-11-15 16:15:23', NULL, NULL, '管理员');
+INSERT INTO `sys_user` VALUES (1, 'admin', '00', '15888888888', '0', '$2a$10$0IiwuIgV/qGglLIaKvh15uZDmp6Ele8nxR7OL2DJRReYV0MA.09Zm', '0', '0', 1, '2021-11-15 16:15:23', NULL, NULL, '管理员');
 INSERT INTO `sys_user` VALUES (2, 'dream', '11', '19888888888', '2', '$2a$10$0IiwuIgV/qGglLIaKvh15uZDmp6Ele8nxR7OL2DJRReYV0MA.09Zm', '0', '0', 2, '2021-11-16 01:16:21', NULL, NULL, 'dream');
-INSERT INTO `sys_user` VALUES (3, 'cs1', '11', '19888888888', '0', '$2a$10$Nhy28Bnd4uZ7K1ro9OsFW.c3Bp9OnAJ.mIVbLppCla3K7oK9Gs0PO', '0', '0', 3, '2021-11-16 01:16:56', NULL, NULL, '');
-INSERT INTO `sys_user` VALUES (4, 'c2', '11', '19888888888', '0', '$2a$10$WyM9L3sV33g94qZ0rSbAkeG0l/V.EvhFv5jpPRWyrB6MgAN7uha5a', '0', '0', 4, '2021-11-16 01:17:12', NULL, NULL, 'qeqwewqeq');
-INSERT INTO `sys_user` VALUES (5, 'c3', '11', '19888888888', '1', '$2a$10$Pr678UQ40VV2jv6rcHSNKOD8ukvWLsEmT7EJ452uAFenPXtlKQFUq', '0', '0', 5, '2021-11-16 01:17:28', NULL, NULL, '');
-INSERT INTO `sys_user` VALUES (6, 'c4', '00', '13321312132', '0', '$2a$10$iqWoU7UJ3vyAe9uci4Iq7upKHDHssqoNNJZ.DUEA.juGtycsU/mgu', '0', '0', 6, '2021-11-16 01:17:53', NULL, NULL, '');
-INSERT INTO `sys_user` VALUES (7, 'root', '00', '16899999999', '2', '$2a$10$UZUX7QAuHuwRXDD2K7C7hOdtif5RhHJJPowvlNs38Dw.zAFflhRxy', '0', '0', 7, '2021-11-16 01:18:22', NULL, NULL, 'root用户');
+INSERT INTO `sys_user` VALUES (3, 'cs1', '11', '19888888888', '0', '$2a$10$Nhy28Bnd4uZ7K1ro9OsFW.c3Bp9OnAJ.mIVbLppCla3K7oK9Gs0PO', '0', '2', 3, '2021-11-16 01:16:56', NULL, NULL, '');
+INSERT INTO `sys_user` VALUES (4, 'km1', '00', '13585664151', '0', '$2a$10$GbICwir0NJ49lcMXhmz6cepqCc/Iw5UmDjFPgGAaXUm0C81GCiw7y', '0', '0', 4, '2021-11-18 02:07:15', NULL, NULL, '123124第三方撒发送到');
+INSERT INTO `sys_user` VALUES (5, 'cs2', '11', '19888888888', '1', '$2a$10$Pr678UQ40VV2jv6rcHSNKOD8ukvWLsEmT7EJ452uAFenPXtlKQFUq', '0', '0', 5, '2021-11-16 01:17:28', NULL, NULL, '');
+INSERT INTO `sys_user` VALUES (6, 'dm1', '00', '13321312132', '0', '$2a$10$iqWoU7UJ3vyAe9uci4Iq7upKHDHssqoNNJZ.DUEA.juGtycsU/mgu', '1', '0', 6, '2021-11-16 01:17:53', NULL, NULL, '');
+INSERT INTO `sys_user` VALUES (7, 'root1', '00', '16899999999', '2', '$2a$10$UZUX7QAuHuwRXDD2K7C7hOdtif5RhHJJPowvlNs38Dw.zAFflhRxy', '0', '0', 7, '2021-11-16 01:18:22', 1, '2021-11-17 18:05:56', 'root用户');
+INSERT INTO `sys_user` VALUES (8, 'wanggang1', '11', '19999999999', '1', '$2a$10$iVHftZstfYTvCU2r3ujBleAVedwUUmYS3nFyMhLSHkbNOU.AwOdga', '0', '0', 8, '2021-11-17 23:54:58', NULL, NULL, '');
+INSERT INTO `sys_user` VALUES (9, 'xiaoming1', '11', '19999999999', '0', '$2a$10$MAWXiuO6RlKx16pqRaNmTOQrK.GybcSof5Vi1l/2HfQHSdeXE.WUS', '1', '0', 9, '2021-11-17 23:55:18', NULL, NULL, '');
+INSERT INTO `sys_user` VALUES (10, 'wangwu1', '11', '19999999998', '0', '$2a$10$gjUnkGv4MPUHpFyGAgowdeecGmNIfj9/we1/jT1Uux1ygT0OfeWtu', '0', '0', 10, '2021-11-17 23:55:42', NULL, NULL, '');
+INSERT INTO `sys_user` VALUES (11, 'lisi11', '11', '18888888888', '1', '$2a$10$VlBbMrEFYKsMXkr7L0HEceF8tYLDhuBXsemGfgrP11GUwhf1f7jSq', '0', '0', 11, '2021-11-17 23:56:01', 2, '2021-11-17 13:06:25', '');
+INSERT INTO `sys_user` VALUES (12, 'nvjing1', '00', '19999999999', '1', '$2a$10$2RE6Fj5owqDvxvzSBC0iwuu0cuQJ0PUao6w8P.b4hBzbMF.zbIIlu', '0', '0', 12, '2021-11-17 23:56:26', NULL, NULL, '');
+INSERT INTO `sys_user` VALUES (13, 'nuoshou1', '00', '19999999999', '2', '$2a$10$V5HXMNXryEWM1oCbOkFBlOV4f04IFIWYnnUc2qii6RZlh3JBBSml.', '1', '0', 13, '2021-11-17 23:56:37', NULL, NULL, '');
+INSERT INTO `sys_user` VALUES (14, 'dema1', '00', '13595515151', '0', '$2a$10$QMekQaALD7y/1GcYD3oE4eD4rekC3vf5fMCIs4OjXybojXnau/0i6', '0', '0', 14, '2021-11-17 23:57:11', 2, '2021-11-16 19:06:39', '');
+INSERT INTO `sys_user` VALUES (15, 'yasuo1', '11', '14521611351', '0', '$2a$10$D3wB9G1ZwohlaNRL/kjf4.rEZXL5yZPNHq7wFaEtgRES6Pkud1bLC', '0', '0', 15, '2021-11-17 23:57:35', NULL, NULL, '');
 
 -- ----------------------------
 -- Table structure for sys_user_sex
@@ -107,7 +116,7 @@ CREATE TABLE `sys_user_sex`  (
   INDEX `gender`(`sex`) USING BTREE,
   INDEX `gender_2`(`sex`, `sex_id`) USING BTREE,
   INDEX `sex_id`(`sex_id`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_bin ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_bin ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of sys_user_sex
@@ -125,7 +134,7 @@ CREATE TABLE `sys_user_type`  (
   `user_type_id` varchar(2) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `user_type` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_bin ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_bin ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of sys_user_type
