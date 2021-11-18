@@ -4,8 +4,10 @@ const router = express.Router();
 // 导入用户路由处理函数
 const userInfoHandler = require("../router-handler/userinfo");
 
-// 创建获取用户信息路由
-router.get('', userInfoHandler.getUserInfo);
+// 创建获取用户信息列表路由
+router.get('', userInfoHandler.getUserInfoList);
+// 创建获取单个用户信息路由
+router.get('/:user_name', userInfoHandler.getUserInfo)
 
 // 导出路由对象
 module.exports = router;
