@@ -53,7 +53,6 @@ const treeMenuRouter = require('./router/menu.js')
 app.use('/menu', treeMenuRouter);
 // 检测token
 app.use((err, req, res, next) => {
-  console.log(err);
   let errInfo = "身份已过期!"
   if (err.name === "UnauthorizedError" && (err.message === "invalid signature" || err.inner.message === "No authorization token was found")) {
     errInfo = "身份验证错误!";
