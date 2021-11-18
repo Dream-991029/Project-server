@@ -19,7 +19,7 @@ module.exports.register = (req, res) => {
     return res.ck(valueErr);
   }
   // 查询用户名sql
-  const sqlByUname = 'SELECT * FROM sys_user WHERE sys_user.user_name=?';
+  const sqlByUname = 'SELECT * FROM sys_user info WHERE info.del_flag=0 AND info.user_name=?';
   db.query(sqlByUname, [data.user_name], (err, results) => {
     // 数据库报错
     if (err) {
@@ -34,22 +34,44 @@ module.exports.register = (req, res) => {
     const sqlGetLastId = 'SELECT info.user_id FROM sys_user info ORDER BY info.user_id DESC LIMIT 1';
     db.query(sqlGetLastId, (err, results) => {
       if (err) return res.ck(err)
-      const newData = {
+      let newData = {
         ...data,
         create_by: results[0].user_id + 1,
         create_time: formatTime()
       }
       delete newData.confirm_password;
-      // 添加用户sql
-      const sqlAddUser = 'INSERT INTO sys_user SET ?';
-      db.query(sqlAddUser, newData, (err, results) => {
-        if (err) {
-          return res.ck(err);
-        } else if (results.affectedRows !== 1) {
-          return res.ck('注册失败,请稍后再试!');
+      // 查询用户是否为被删除的用户
+      const sqlGetDeleteUser = 'SELECT info.user_id,info.del_flag FROM sys_user info WHERE info.del_flag=2 AND info.user_name=?'
+      db.query(sqlGetDeleteUser, [data.user_name], (err, results) => {
+        if (err) return res.ck(err)
+        if (results.length === 0) {
+          // 追加数据
+          // 添加用户sql
+          const sqlAddUser = 'INSERT INTO sys_user SET ?';
+          db.query(sqlAddUser, newData, (err, results) => {
+            if (err) {
+              return res.ck(err);
+            } else if (results.affectedRows !== 1) {
+              return res.ck('注册失败,请稍后再试!');
+            }
+            return res.ck('注册成功,请登录!', '注册成功!', 0);
+          });
+        } else {
+          newData.status = '0';
+          newData.del_flag = '0';
+          newData.create_by = results[0].user_id;
+          // 更改状态
+          const sqlUpdateUser = 'UPDATE sys_user info SET ? WHERE info.user_name=?';
+          db.query(sqlUpdateUser, [newData, data.user_name], (err, results) => {
+            if (err) return res.ck(err)
+            if (results.affectedRows !== 1) {
+              return res.ck('注册失败,请稍后再试!');
+            }
+            return res.ck('注册成功,请登录!', '注册成功!', 0)
+          })
         }
-        return res.ck('注册成功,请登录!', '注册成功!', 0);
-      });
+      })
+      
     });
   });
 };
@@ -62,12 +84,16 @@ module.exports.login = (req, res) => {
     return res.ck(valueErr);
   }
   // 获取用户信息sql
-  const sqlByUname = 'SELECT * FROM sys_user WHERE sys_user.user_name=?'; 
+  const sqlByUname = "SELECT * FROM sys_user info WHERE info.del_flag=0 AND info.user_name=?"; 
   db.query(sqlByUname, [data.user_name], (err, results) => {
     if (err) {
       return res.ck(err);
     } else if (results.length !== 1) {
-      return res.ck('登录失败,此帐户不存在!');
+      return res.ck('登录失败, 此帐户不存在!');
+    }
+    // 判断用户状态
+    if (results[0].status === "1") {
+      return res.ck('您的帐号已被禁用, 请联系管理员!')
     }
     // 检测账户密码是否正确
     const compareResult = bcrypt.compareSync(data.password, results[0].password);
