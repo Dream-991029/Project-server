@@ -1,5 +1,8 @@
 // 导入数据库模块
 const db = require('../db/mysql');
+// 导入bcryptjs模块
+const bcrypt = require('bcryptjs');
+const formatTime = require('../common/formatTime')
 // 导入用户表单验证
 const userInfoFromCheck = require('../checkfrom/userinfo');
 
@@ -28,7 +31,7 @@ module.exports.getUserInfoList = (req, res) => {
   db.query(sqlGetUserInfo, (err, results) => {
     if (err) return res.ck(err)
     const val = results;
-    
+
     db.query(sqlGetUserInfoCount, (err1, results1) => {
       if (err1) return res.ck(err1)
       const data = {
@@ -61,5 +64,51 @@ module.exports.getUserInfo = (req, res) => {
 module.exports.addUser = (req, res) => {
   // 获取数据
   const data = req.body;
-  console.log(data);
+  const valErr = userInfoFromCheck.validate(data, userInfoFromCheck.schema.schemaAddUserInfo)
+  if (valErr) return res.ck(valErr)
+  // 查询用户名sql
+  const sqlByUname = 'SELECT info.user_id FROM sys_user info WHERE info.del_flag=0 AND info.user_name=?';
+  db.query(sqlByUname, [data.user_name], (err, results) => {
+    // 数据库报错
+    if (err) return res.ck(err)
+    if (results.length > 0) return res.ck('该帐号已被占用!')
+    // 用户名没有被占用
+    // 密码加密(bcrypt.hashSync(明文密码, 随机盐长度))
+    data.password = bcrypt.hashSync(data.password, 10);
+    let newData = {
+      ...data,
+      create_time: formatTime()
+    }
+    delete newData.confirm_password;
+    if (data.remark === '') {
+      newData.remark = '新用户'
+    }
+    // 查询用户是否为被删除的用户
+    const sqlGetDeleteUser = 'SELECT info.user_id FROM sys_user info WHERE info.del_flag=2 AND info.user_name=?'
+    db.query(sqlGetDeleteUser, [data.user_name], (err, results) => {
+      if (err) return res.ck(err)
+      if (results.length > 0) {
+        newData.status = '0'
+        newData.del_flag = '0'
+        const sqlUpdateUser = 'UPDATE sys_user info SET ? WHERE info.user_name=?'
+        db.query(sqlUpdateUser, [newData, data.user_name], (err, results) => {
+          if (err) return res.ck(err)
+          if (results.affectedRows !== 1) {
+            return res.ck('添加失败, 请稍后再试!');
+          }
+          return res.ck('添加成功!', '添加成功!', 0)
+        })
+      } else {
+        // 添加用户sql
+        const sqlAddUser = 'INSERT INTO sys_user SET ?';
+        db.query(sqlAddUser, newData, (err, results) => {
+          if (err) return res.ck(err);
+          if (results.affectedRows !== 1) {
+            return res.ck('添加失败, 请稍后再试!');
+          }
+          return res.ck('添加成功!', '添加成功!', 0);
+        });
+      }
+    })
+  });
 }
