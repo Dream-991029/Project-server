@@ -37,7 +37,8 @@ module.exports.register = (req, res) => {
       let newData = {
         ...data,
         create_by: results[0].user_id + 1,
-        create_time: formatTime()
+        create_time: formatTime(),
+        remark: '新用户'
       }
       delete newData.confirm_password;
       // 查询用户是否为被删除的用户
@@ -57,10 +58,11 @@ module.exports.register = (req, res) => {
             return res.ck('注册成功,请登录!', '注册成功!', 0);
           });
         } else {
-          newData.status = '0';
-          newData.del_flag = '0';
+          newData.status = '0',
+          newData.del_flag = '0'
+          newData.remark = '新用户'
           newData.create_by = results[0].user_id;
-          // 更改状态
+          // 更新用户信息
           const sqlUpdateUser = 'UPDATE sys_user info SET ? WHERE info.user_name=?';
           db.query(sqlUpdateUser, [newData, data.user_name], (err, results) => {
             if (err) return res.ck(err)

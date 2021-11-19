@@ -8,6 +8,8 @@ const userInfoHandler = require("../router-handler/userinfo");
 router.get('', userInfoHandler.getUserInfoList);
 // 创建获取单个用户信息路由
 router.get('/:user_name', userInfoHandler.getUserInfo)
+// 添加用户路由
+router.post('/adduser', userInfoHandler.addUser)
 
 // 导出路由对象
 module.exports = router;
