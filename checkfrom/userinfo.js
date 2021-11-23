@@ -18,7 +18,7 @@ const schemaAddUserInfo = joi.object({
   phone_number: joi.string().pattern(/^1[3|4|5|6|7|8|9]\d{9}$/).error(new Error('手机号码必须为11位!')),
   sex: joi.string().max(1).valid("0", "1", "2").error(new Error('用户性别最大长度为1的字符串(允许值: 0 或 1 或 2)!')),
   password: joi.string().required().max(100).error(new Error('密码最大长度为100的字符串!')),
-  create_by: joi.string().required().error(new Error('创建者id有误!')),
+  create_by: joi.number().required().error(new Error('创建者id有误!')),
   confirm_password: joi.valid(joi.ref('password')).error(new Error('两次输入密码不一致!')),
   remark: joi.string().min(0).allow('').max(500).error(new Error('备注最大长度为500的字符串!'))
 })
