@@ -19,6 +19,7 @@
     "jsonwebtoken": "^8.5.1",
     "multer": "^1.4.3",
     "mysql": "^2.18.1",
-    "uuid": "^8.3.2"
+    "uuid": "^8.3.2",
+    "word-text-parser": "^1.0.1"
   }
 }
