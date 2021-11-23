@@ -10,6 +10,10 @@ router.get('', userInfoHandler.getUserInfoList);
 router.get('/info', userInfoHandler.getUserInfo)
 // 添加用户路由
 router.post('/adduser', userInfoHandler.addUser)
+// 修改用户路由
+router.put('/edituser', userInfoHandler.editUser)
+// 删除用户路由
+router.delete('/deleteuser', userInfoHandler.deleteUser)
 
 // 导出路由对象
 module.exports = router;

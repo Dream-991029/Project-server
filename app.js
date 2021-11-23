@@ -51,6 +51,9 @@ app.use('/userinfo', userInfoRouter)
 // 导入菜单树路由
 const treeMenuRouter = require('./router/menu.js')
 app.use('/menu', treeMenuRouter);
+// 文件上传
+const fileRouter = require('./router/file.js')
+app.use('/file', fileRouter)
 // 检测token
 app.use((err, req, res, next) => {
   let errInfo = "身份已过期!"
