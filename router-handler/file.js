@@ -24,6 +24,7 @@ module.exports.uploadFile = (req, res) => {
   db.query(sqlAddQuestionBank, [newData], (err, results) => {
     if (err) return res.ck(err)
     if (results.affectedRows !== 1) return res.ck('添加题库失败, 请稍后再试!')
+    const topic_id = results.insertId;
     // 解析word
     var absPath = path.join(__dirname, `../uploads/${file_name}.docx`);
     parser(absPath, resultList => {
@@ -406,9 +407,11 @@ module.exports.uploadFile = (req, res) => {
         }
         return cur
       })
-      const key_list = Array.from(queInfoList[0].keys()).join(',')
+      const key_list = Array.from(queInfoList[0].keys()).join(',') + ",topic_id"
       queInfoList.forEach((val, inx, arr) => {
-        arr[inx] = Array.from(val.values())
+        let info = Array.from(val.values())
+        info.push(topic_id)
+        arr[inx] = info
       })
       const sqlAddQuestion = `INSERT INTO sys_question(${key_list}) VALUES ?`
       db.query(sqlAddQuestion, [queInfoList], (err, results) => {
@@ -418,4 +421,9 @@ module.exports.uploadFile = (req, res) => {
       })
     })
   })
+}
+
+// 获取题目
+module.exports.getTopicInfo = (req, res) => {
+  console.log(req.query);
 }

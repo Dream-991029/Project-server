@@ -24,7 +24,9 @@ const upload = multer({ storage });
 // 导入用户路由处理函数
 const fileHandler = require("../router-handler/file");
 // 创建上传路由
-router.post('', upload.single('topicFile'), fileHandler.uploadFile);
+router.post('/upload', upload.single('topicFile'), fileHandler.uploadFile);
+// 获取题库路由
+router.get('', fileHandler.getTopicInfo)
 
 // 导出路由对象
 module.exports = router;
