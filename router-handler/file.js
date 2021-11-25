@@ -33,14 +33,12 @@ module.exports.uploadFile = (req, res) => {
         }
         return -1;
       }
-      const sqlAddQuestion = 'INSERT INTO sys_question SET ?'
       const queTypeList = ['单选题', '多选题', '判断题', '填空题', '问答题']
       let queInfoList = []
       let questionReg = /^\d+(、|\.){1}.*$/
       let optionsReg = /^[A-Z]{1}(、|\.){1}.*$/
       let answerReg = /^答案/
       let analysisReg = /^解析/
-      let regInfoReg = /(.*)、(.*)/
       String.prototype.trim = function (char, type) {
         if (char) {
           if (type == 'left') {
@@ -64,18 +62,22 @@ module.exports.uploadFile = (req, res) => {
             ql.push(_index)
           }
         })
-        ql.reduce((_pre, _cur, _inx, _arr) => {
+        if (ql.length === 1) {
           let obj = new Map()
-          // 判断问题中是否含有、或者.
-          if (info[_pre].indexOf('、') + 1 === 0) {
-            regInfoReg = /(.*)\.(.*)/
+          let qid = ''
+          let q = ''
+          if (info[ql[0]].indexOf('、') + 1 !== 0) {
+            qid = info[ql[0]].slice(0, info[ql[0]].indexOf('、')).trim()
+            q = info[ql[0]].slice(info[ql[0]].indexOf('、') + 1).trim()
+          } else if (info[ql[0]].indexOf('.') + 1 !== 0) {
+            qid = info[ql[0]].slice(0, info[ql[0]].indexOf('.')).trim()
+            q = info[ql[0]].slice(info[ql[0]].indexOf('.') + 1).trim()
           }
           // 将问题id和问题存入obj中
-          let question_info = info[_pre].match(regInfoReg)
-          obj.set('question_id', question_info[1].trim())
-          obj.set('question', question_info[2].trim())
+          obj.set('question_id', parseInt(qid))
+          obj.set('question', q)
           // 取出所有选项+答案+解析, 并存入obj中
-          let options_answer_analysis = info.slice(_pre + 1, _cur)
+          let options_answer_analysis = info.slice(ql[0] + 1)
           let options_list = []
           let oaal = []
           options_answer_analysis.forEach((__val, __index) => {
@@ -83,39 +85,53 @@ module.exports.uploadFile = (req, res) => {
             if (optionsReg.test(__val)) {
               oaal.push(__index)
             } else if (answerReg.test(__val)) {
-              obj.set('answer', options_answer_analysis[__index].match(/答案(.*)/)[1].trim(':', 'left').trim('：', 'left').trim())
+              obj.set('answer', __val.match(/答案(.*)/)[1].trim(':', 'left').trim('：', 'left').trim())
             } else if (analysisReg.test(__val)) {
-              obj.set('analysis', options_answer_analysis[__index].match(/解析(.*)/)[1].trim(':', 'left').trim('：', 'left').trim())
+              obj.set('analysis', __val.match(/解析(.*)/)[1].trim(':', 'left').trim('：', 'left').trim())
             }
           })
-          if (oaal.length !== 0) {
-            oaal.reduce((__pre, __cur, __inx, __arr) => {
-              options_list.push(info[__pre])
-              if (__inx === __arr.length - 1)
-                options_list.push(info[__pre])
-              return __cur
-            })
-            obj.set('question_options', options_list.join('|'))
-          } else {
-            obj.set('question_options', '')
+          if (obj.get('analysis') === undefined) {
+            obj.set('analysis', undefined)
           }
-          obj.set('type', _pre)
-          obj.set('create_by', newData.create_by)
+          if (oaal.length === 0) {
+            options_list = undefined
+          } else {
+            oaal.forEach((_v, _i, _a) => {
+              if (_a.length === 1) {
+                options_list = options_answer_analysis[_v].split(/\s+/)
+              } else if (_a.length === 2) {
+                options_answer_analysis[_v].split(/\s+/).forEach((__v, __i, __a) => {
+                  options_list.push(__v.trim())
+                })
+              } else {
+                options_list.push(options_answer_analysis[_v].trim())
+              }
+            })
+          }
+          obj.set('question_options', JSON.stringify(options_list))
+          obj.set('type', (inx - 1).toString())
+          obj.set('create_by', parseInt(newData.create_by))
           obj.set('number_answers', 120)
           obj.set('number_errors', 30)
           queInfoList.push(obj)
-          // 最后一个问题
-          if (_inx === _arr.length - 1) {
-            let _obj = new Map()
+        } else {
+          ql.reduce((_pre, _cur, _inx, _arr) => {
+            let obj = new Map()
             // 判断问题中是否含有、或者.
-            if (info[_cur].indexOf('、') + 1 === 0) {
-              regInfoReg = /(.*)\.(.*)/
+            let qid = ''
+            let q = ''
+            if (info[_pre].indexOf('、') + 1 !== 0) {
+              qid = info[_pre].slice(0, info[_pre].indexOf('、')).trim()
+              q = info[_pre].slice(info[_pre].indexOf('、') + 1).trim()
+            } else if (info[_pre].indexOf('.') + 1 !== 0) {
+              qid = info[_pre].slice(0, info[_pre].indexOf('.')).trim()
+              q = info[_pre].slice(info[_pre].indexOf('.') + 1).trim()
             }
-            question_info = info[_cur].match(regInfoReg)
-            _obj.set('question_id', question_info[1].trim())
-            _obj.set('question', question_info[2].trim())
+            // 将问题id和问题存入obj中
+            obj.set('question_id', parseInt(qid))
+            obj.set('question', q)
             // 取出所有选项+答案+解析, 并存入obj中
-            let options_answer_analysis = info.slice(_cur + 1)
+            let options_answer_analysis = info.slice(_pre + 1, _cur)
             let options_list = []
             let oaal = []
             options_answer_analysis.forEach((__val, __index) => {
@@ -123,30 +139,93 @@ module.exports.uploadFile = (req, res) => {
               if (optionsReg.test(__val)) {
                 oaal.push(__index)
               } else if (answerReg.test(__val)) {
-                obj.set('answer', options_answer_analysis[__index].match(/答案(.*)/)[1].trim('：', 'left').trim(':', 'left').trim())
+                obj.set('answer', __val.match(/答案(.*)/)[1].trim(':', 'left').trim('：', 'left').trim())
               } else if (analysisReg.test(__val)) {
-                obj.set('analysis', options_answer_analysis[__index].match(/解析(.*)/)[1].trim('：', 'left').trim(':', 'left').trim())
+                obj.set('analysis', __val.match(/解析(.*)/)[1].trim(':', 'left').trim('：', 'left').trim())
               }
             })
-            if (oaal.length !== 0) {
-              oaal.reduce((__pre, __cur, __inx, __arr) => {
-                options_list.push(info[__pre])
-                if (__inx === __arr.length - 1)
-                  options_list.push(info[__pre])
-                return __cur
-              })
-              obj.set('question_options', options_list.join('|'))
-            } else {
-              obj.set('question_options', '')
+            if (obj.get('analysis') === undefined) {
+              obj.set('analysis', undefined)
             }
-            _obj.set('type', _pre)
-            _obj.set('create_by', newData.create_by)
-            _obj.set('number_answers', 120)
-            _obj.set('number_errors', 30)
-            queInfoList.push(_obj)
-          }
-          return _cur
-        })
+            if (oaal.length === 0) {
+              options_list = undefined
+            } else {
+              oaal.forEach((_v, _i, _a) => {
+                if (_a.length === 1) {
+                  options_list = options_answer_analysis[_v].split(/\s+/)
+                } else if (_a.length === 2) {
+                  options_answer_analysis[_v].split(/\s+/).forEach((__v, __i, __a) => {
+                    options_list.push(__v.trim())
+                  })
+                } else {
+                  options_list.push(options_answer_analysis[_v].trim())
+                }
+              })
+            }
+            obj.set('question_options', JSON.stringify(options_list))
+            obj.set('type', (inx - 1).toString())
+            obj.set('create_by', parseInt(newData.create_by))
+            obj.set('number_answers', 120)
+            obj.set('number_errors', 30)
+            queInfoList.push(obj)
+            // 最后一个问题
+            if (_inx === _arr.length - 1) {
+              let _obj = new Map()
+              // 判断问题中是否含有、或者.
+              let qid = ''
+              let q = ''
+              if (info[_cur].indexOf('、') + 1 !== 0) {
+                qid = info[_cur].slice(0, info[_cur].indexOf('、')).trim()
+                q = info[_cur].slice(info[_cur].indexOf('、') + 1).trim()
+              } else if (info[_cur].indexOf('.') + 1 !== 0) {
+                qid = info[_cur].slice(0, info[_cur].indexOf('.')).trim()
+                q = info[_cur].slice(info[_cur].indexOf('.') + 1).trim()
+              }
+              // 将问题id和问题存入obj中
+              _obj.set('question_id', parseInt(qid))
+              _obj.set('question', q)
+              // 取出所有选项+答案+解析, 并存入obj中
+              let options_answer_analysis = info.slice(_cur + 1)
+              let options_list = []
+              let oaal = []
+              options_answer_analysis.forEach((__val, __index) => {
+                // 判断是否是选项
+                if (optionsReg.test(__val)) {
+                  oaal.push(__index)
+                } else if (answerReg.test(__val)) {
+                  _obj.set('answer', __val.match(/答案(.*)/)[1].trim('：').trim(':').trim())
+                } else if (analysisReg.test(__val)) {
+                  _obj.set('analysis', __val.match(/解析(.*)/)[1].trim('：').trim(':').trim())
+                }
+              })
+              if (_obj.get('analysis') === undefined) {
+                _obj.set('analysis', undefined)
+              }
+              if (oaal.length === 0) {
+                options_list = undefined
+              } else {
+                oaal.forEach((_v, _i, _a) => {
+                  if (_a.length === 1) {
+                    options_list = options_answer_analysis[_v].split(/\s+/)
+                  } else if (_a.length === 2) {
+                    options_answer_analysis[_v].split(/\s+/).forEach((__v, __i, __a) => {
+                      options_list.push(__v.trim())
+                    })
+                  } else {
+                    options_list.push(options_answer_analysis[_v].trim())
+                  }
+                })
+              }
+              _obj.set('question_options', JSON.stringify(options_list))
+              _obj.set('type', (inx - 1).toString())
+              _obj.set('create_by', parseInt(newData.create_by))
+              _obj.set('number_answers', 120)
+              _obj.set('number_errors', 30)
+              queInfoList.push(_obj)
+            }
+            return _cur
+          })
+        }
         // 简答题
         if (inx === arr.length - 1) {
           const info = resultList.slice(cur + 1)
@@ -159,18 +238,22 @@ module.exports.uploadFile = (req, res) => {
               ql.push(_index)
             }
           })
-          ql.reduce((_pre, _cur, _inx, _arr) => {
+          if (ql.length === 1) {
             let obj = new Map()
-            // 判断问题中是否含有、或者.
-            if (info[_pre].indexOf('、') + 1 === 0) {
-              regInfoReg = /(.*)\.(.*)/
+            let qid = ''
+            let q = ''
+            if (info[ql[0]].indexOf('、') + 1 !== 0) {
+              qid = info[ql[0]].slice(0, info[ql[0]].indexOf('、')).trim()
+              q = info[ql[0]].slice(info[ql[0]].indexOf('、') + 1).trim()
+            } else if (info[ql[0]].indexOf('.') + 1 !== 0) {
+              qid = info[ql[0]].slice(0, info[ql[0]].indexOf('.')).trim()
+              q = info[ql[0]].slice(info[ql[0]].indexOf('.') + 1).trim()
             }
             // 将问题id和问题存入obj中
-            let question_info = info[_pre].match(regInfoReg)
-            obj.set('question_id', question_info[1].trim())
-            obj.set('question', question_info[2].trim())
+            obj.set('question_id', parseInt(qid))
+            obj.set('question', q)
             // 取出所有选项+答案+解析, 并存入obj中
-            let options_answer_analysis = info.slice(_pre + 1, _cur)
+            let options_answer_analysis = info.slice(ql[0] + 1)
             let options_list = []
             let oaal = []
             options_answer_analysis.forEach((__val, __index) => {
@@ -178,35 +261,53 @@ module.exports.uploadFile = (req, res) => {
               if (optionsReg.test(__val)) {
                 oaal.push(__index)
               } else if (answerReg.test(__val)) {
-                obj.set('answer', options_answer_analysis[__index].match(/答案(.*)/)[1].trim('：', 'left').trim(':', 'left').trim())
+                obj.set('answer', __val.match(/答案(.*)/)[1].trim(':', 'left').trim('：', 'left').trim())
               } else if (analysisReg.test(__val)) {
-                obj.set('analysis', options_answer_analysis[__index].match(/解析(.*)/)[1].trim('：', 'left').trim(':', 'left').trim())
+                obj.set('analysis', __val.match(/解析(.*)/)[1].trim(':', 'left').trim('：', 'left').trim())
               }
             })
-            oaal.reduce((__pre, __cur, __inx, __arr) => {
-              options_list.push(info[__pre])
-              if (__inx === __arr.length - 1)
-                options_list.push(info[__pre])
-              return __cur
-            })
-            obj.set('question_options', options_list.join('|'))
-            obj.set('type', _pre)
-            obj.set('create_by', newData.create_by)
+            if (obj.get('analysis') === undefined) {
+              obj.set('analysis', undefined)
+            }
+            if (oaal.length === 0) {
+              options_list = undefined
+            } else {
+              oaal.forEach((_v, _i, _a) => {
+                if (_a.length === 1) {
+                  options_list = options_answer_analysis[_v].split(/\s+/)
+                } else if (_a.length === 2) {
+                  options_answer_analysis[_v].split(/\s+/).forEach((__v, __i, __a) => {
+                    options_list.push(__v.trim())
+                  })
+                } else {
+                  options_list.push(options_answer_analysis[_v].trim())
+                }
+              })
+            }
+            obj.set('question_options', JSON.stringify(options_list))
+            obj.set('type', inx.toString())
+            obj.set('create_by', parseInt(newData.create_by))
             obj.set('number_answers', 120)
             obj.set('number_errors', 30)
             queInfoList.push(obj)
-            // 最后一个问题
-            if (_inx === _arr.length - 1) {
-              let _obj = new Map()
+          } else {
+            ql.reduce((_pre, _cur, _inx, _arr) => {
+              let obj = new Map()
               // 判断问题中是否含有、或者.
-              if (info[_cur].indexOf('、') + 1 === 0) {
-                regInfoReg = /(.*)\.(.*)/
+              let qid = ''
+              let q = ''
+              if (info[_pre].indexOf('、') + 1 !== 0) {
+                qid = info[_pre].slice(0, info[_pre].indexOf('、')).trim()
+                q = info[_pre].slice(info[_pre].indexOf('、') + 1).trim()
+              } else if (info[_pre].indexOf('.') + 1 !== 0) {
+                qid = info[_pre].slice(0, info[_pre].indexOf('.')).trim()
+                q = info[_pre].slice(info[_pre].indexOf('.') + 1).trim()
               }
-              question_info = info[_cur].match(regInfoReg)
-              _obj.set('question_id', question_info[1].trim())
-              _obj.set('question', question_info[2].trim())
+              // 将问题id和问题存入obj中
+              obj.set('question_id', parseInt(qid))
+              obj.set('question', q)
               // 取出所有选项+答案+解析, 并存入obj中
-              let options_answer_analysis = info.slice(_cur + 1)
+              let options_answer_analysis = info.slice(_pre + 1, _cur)
               let options_list = []
               let oaal = []
               options_answer_analysis.forEach((__val, __index) => {
@@ -214,35 +315,107 @@ module.exports.uploadFile = (req, res) => {
                 if (optionsReg.test(__val)) {
                   oaal.push(__index)
                 } else if (answerReg.test(__val)) {
-                  obj.set('answer', options_answer_analysis[__index].match(/答案(.*)/)[1].trim('：', 'left').trim(':', 'left').trim())
+                  obj.set('answer', __val.match(/答案(.*)/)[1].trim('：', 'left').trim(':', 'left').trim())
                 } else if (analysisReg.test(__val)) {
-                  obj.set('analysis', options_answer_analysis[__index].match(/解析(.*)/)[1].trim('：', 'left').trim(':', 'left').trim())
+                  obj.set('analysis', __val.match(/解析(.*)/)[1].trim('：', 'left').trim(':', 'left').trim())
                 }
               })
-              oaal.reduce((__pre, __cur, __inx, __arr) => {
-                options_list.push(info[__pre])
-                if (__inx === __arr.length - 1)
-                  options_list.push(info[__pre])
-                return __cur
-              })
-              if (options_list.length === 0) {
-                _obj.set('question_options', '')
-              } else {
-                _obj.set('question_options', options_list.join('|'))
+              if (obj.get('analysis') === undefined) {
+                obj.set('analysis', undefined)
               }
-              _obj.set('type', _pre)
-              _obj.set('create_by', newData.create_by)
-              _obj.set('number_answers', 120)
-              _obj.set('number_errors', 30)
-              queInfoList.push(_obj)
-            }
-            return _cur
-          })
+              if (oaal.length === 0) {
+                options_list = undefined
+              } else {
+                oaal.forEach((_v, _i, _a) => {
+                  if (_a.length === 1) {
+                    options_list = options_answer_analysis[_v].split(/\s+/)
+                  } else if (_a.length === 2) {
+                    options_answer_analysis[_v].split(/\s+/).forEach((__v, __i, __a) => {
+                      options_list.push(__v.trim())
+                    })
+                  } else {
+                    options_list.push(options_answer_analysis[_v].trim())
+                  }
+                })
+              }
+              
+              obj.set('question_options', JSON.stringify(options_list))
+              obj.set('type', inx.toString())
+              obj.set('create_by', parseInt(newData.create_by))
+              obj.set('number_answers', 120)
+              obj.set('number_errors', 30)
+              queInfoList.push(obj)
+              // 最后一个问题
+              if (_inx === _arr.length - 1) {
+                let _obj = new Map()
+                // 判断问题中是否含有、或者.
+                let qid = ''
+                let q = ''
+                if (info[_cur].indexOf('、') + 1 !== 0) {
+                  qid = info[_cur].slice(0, info[_cur].indexOf('、')).trim()
+                  q = info[_cur].slice(info[_cur].indexOf('、') + 1).trim()
+                } else if (info[_cur].indexOf('.') + 1 !== 0) {
+                  qid = info[_cur].slice(0, info[_cur].indexOf('.')).trim()
+                  q = info[_cur].slice(info[_cur].indexOf('.') + 1).trim()
+                }
+                // 将问题id和问题存入obj中
+                _obj.set('question_id', parseInt(qid))
+                _obj.set('question', q)
+                // 取出所有选项+答案+解析, 并存入obj中
+                let options_answer_analysis = info.slice(_cur + 1)
+                let options_list = []
+                let oaal = []
+                options_answer_analysis.forEach((__val, __index) => {
+                  // 判断是否是选项
+                  if (optionsReg.test(__val)) {
+                    oaal.push(__index)
+                  } else if (answerReg.test(__val)) {
+                    _obj.set('answer', __val.match(/答案(.*)/)[1].trim('：', 'left').trim(':', 'left').trim())
+                  } else if (analysisReg.test(__val)) {
+                    _obj.set('analysis', __val.match(/解析(.*)/)[1].trim('：', 'left').trim(':', 'left').trim())
+                  }
+                })
+                if (_obj.get('analysis') === undefined) {
+                  _obj.set('analysis', undefined)
+                }
+                if (oaal.length === 0) {
+                  options_list = undefined
+                } else {
+                  oaal.forEach((_v, _i, _a) => {
+                    if (_a.length === 1) {
+                      options_list = options_answer_analysis[_v].split(/\s+/)
+                    } else if (_a.length === 2) {
+                      options_answer_analysis[_v].split(/\s+/).forEach((__v, __i, __a) => {
+                        options_list.push(__v.trim())
+                      })
+                    } else {
+                      options_list.push(options_answer_analysis[_v].trim())
+                    }
+                  })
+                }
+                _obj.set('question_options', JSON.stringify(options_list))
+                _obj.set('type', inx.toString())
+                _obj.set('create_by', parseInt(newData.create_by))
+                _obj.set('number_answers', 120)
+                _obj.set('number_errors', 30)
+                queInfoList.push(_obj)
+              }
+              return _cur
+            })
+          }
         }
         return cur
       })
-      console.log(queInfoList)
+      const key_list = Array.from(queInfoList[0].keys()).join(',')
+      queInfoList.forEach((val, inx, arr) => {
+        arr[inx] = Array.from(val.values())
+      })
+      const sqlAddQuestion = `INSERT INTO sys_question(${key_list}) VALUES ?`
+      db.query(sqlAddQuestion, [queInfoList], (err, results) => {
+        if (err) return res.ck(err)
+        if (results.affectedRows !== queInfoList.length) return res.ck('添加题库失败, 请稍后再试!')
+        return res.ck('添加题库成功!', '添加题库成功!', 0)
+      })
     })
-    // return res.ck('添加题库成功!', '添加题库成功!', 0)
   })
 }
